@@ -32,11 +32,14 @@ builder.Services.AddOpenIddict()
 
         options
             .AllowAuthorizationCodeFlow()
-            .RequireProofKeyForCodeExchange();
+            .RequireProofKeyForCodeExchange()
+            .AllowClientCredentialsFlow()
+            .AllowRefreshTokenFlow();
 
         options
                 .SetAuthorizationEndpointUris("/connect/authorize")
-                .SetTokenEndpointUris("/connect/token");
+                .SetTokenEndpointUris("/connect/token")
+                .SetUserinfoEndpointUris("/connect/userinfo");
 
         options
             .SetTokenEndpointUris("/connect/token");
@@ -51,7 +54,8 @@ builder.Services.AddOpenIddict()
         options
             .UseAspNetCore()
             .EnableTokenEndpointPassthrough()
-            .EnableAuthorizationEndpointPassthrough();
+            .EnableAuthorizationEndpointPassthrough()
+            .EnableUserinfoEndpointPassthrough();
 
     });
 
@@ -67,6 +71,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
 {
