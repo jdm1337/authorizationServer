@@ -1,4 +1,6 @@
+using AuthorizationServer.HostedServices;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,49 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             options.LoginPath = "/account/login";
             options.AccessDeniedPath = "/home/accessdenied";
         });
+
+builder.Services.AddDbContext<DbContext>(options =>
+{
+    options.UseInMemoryDatabase(nameof(DbContext));
+    options.UseOpenIddict();
+});
+builder.Services.AddHostedService<OpenIddictWorker>();
+
+builder.Services.AddOpenIddict()
+    .AddCore(options =>
+    {
+        options.UseEntityFrameworkCore()
+            .UseDbContext<DbContext>();
+    })
+    .AddServer(options =>
+    {
+        options
+            .AllowClientCredentialsFlow();
+
+        options
+            .AllowAuthorizationCodeFlow()
+            .RequireProofKeyForCodeExchange();
+
+        options
+                .SetAuthorizationEndpointUris("/connect/authorize")
+                .SetTokenEndpointUris("/connect/token");
+
+        options
+            .SetTokenEndpointUris("/connect/token");
+
+        options
+        .AddEphemeralEncryptionKey()
+        .AddEphemeralSigningKey()
+        .DisableAccessTokenEncryption();
+
+        options.RegisterScopes("api");
+
+        options
+            .UseAspNetCore()
+            .EnableTokenEndpointPassthrough()
+            .EnableAuthorizationEndpointPassthrough();
+
+    });
 
 var app = builder.Build();
 
